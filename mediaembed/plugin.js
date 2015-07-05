@@ -140,6 +140,7 @@
 								delete div.attributes[ 'data-embed-source' ];
 
 								html = CKEDITOR.tools.htmlDecode( decodeURI( html ) );
+								html = editor.dataProcessor.toHtml( html );
 								div.setHtml( html );
 							}
 						}
