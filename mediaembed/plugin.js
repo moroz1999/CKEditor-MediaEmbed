@@ -48,19 +48,19 @@
 			var interval = window.setInterval(function() {
 				for ( var i = 0; i < iframes.length; i++ ) {
 					var iframe = iframes[ i ],
-						body = iframe.getFrameDocument().getBody().$;
+						body = iframe.getFrameDocument().getBody();
 					iframe.setStyles({
-						'width': body.scrollWidth + 'px',
-						'height': body.scrollHeight + 'px'
+						'height': body.$.scrollHeight + 'px'
 					});
+					body.setStyle( 'overflow-y', 'hidden' );
 				}
-			}, 500 );
+			}, 5000 );
 
 			var stopResizing = function() {
 				window.clearInterval( interval );
 			};
 
-			window.setInterval( stopResizing, 5000 );
+			window.setTimeout( stopResizing, 15000 );
 			editor.on( 'contentDomUnload', stopResizing );
 		}
 	}
@@ -69,6 +69,7 @@
 		icons: 'mediaembed', // %REMOVE_LINE_CORE%
 		hidpi: true, // %REMOVE_LINE_CORE%
 		lang: 'en,es',
+		requires: 'dialog',
 		onLoad: function() {
 			CKEDITOR.addCss(
 				'.embed-content iframe { width: 100%; border: 0; }'
