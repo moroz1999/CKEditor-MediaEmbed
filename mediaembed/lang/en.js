@@ -6,7 +6,9 @@
 
 // set CKeditor lang
 CKEDITOR.plugins.setLang( 'mediaembed', 'en', {
-    toolbar: 'Embed Media',
-    dialogTitle : 'Embed Media',
-    dialogLabel : 'Paste Embed Code Here'
+    button: 'Embed Media',
+    dialogTitle: 'Embed Media',
+    dialogLabel: 'Paste Embed Code Here',
+    loading: 'loading...',
+    pathName: 'Embed Media'
 } );
