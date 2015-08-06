@@ -13,59 +13,6 @@
 
 (function() {
 	'use strict';
-	function processEmbedContent( editor ) {
-		var divs = editor.document.getElementsByTag( 'div' ),
-			count = divs.count(),
-			embeds = [],
-			i;
-		for ( i = 0; i < count; i++ ) {
-			var div = divs.getItem( i );
-			if ( div.hasClass( 'embed-content' ) && !div.data( 'embed-source' ) ) {
-				embeds.push( div );
-			}
-		}
-
-		var iframes = [];
-		for ( i = 0; i < embeds.length; i++ ) {
-			var embed = embeds[ i ],
-				html = embed.getHtml(),
-				iframe = editor.document.createElement( 'iframe' );
-
-			iframe.setAttribute( 'contenteditable', 'false' );
-
-			html = editor.dataProcessor.toDataFormat( html );
-
-			embed.setHtml( '' );
-			embed.data( 'embed-source', encodeURI( html ) );
-			embed.append( iframe );
-
-			var iframeDoc = iframe.getFrameDocument();
-			iframeDoc.write( html );
-
-			iframes.push( iframe );
-		}
-
-		if ( iframes.length ) {
-			var interval = window.setInterval(function() {
-				for ( var i = 0; i < iframes.length; i++ ) {
-					var iframe = iframes[ i ],
-						body = iframe.getFrameDocument().getBody();
-					iframe.setStyles({
-						'height': body.$.scrollHeight + 'px'
-					});
-					body.setStyle( 'overflow-y', 'hidden' );
-				}
-			}, 5000 );
-
-			var stopResizing = function() {
-				window.clearInterval( interval );
-			};
-
-			window.setTimeout( stopResizing, 15000 );
-			editor.on( 'contentDomUnload', stopResizing );
-		}
-	}
-
 	var fixSrc =
 		// In Firefox src must exist and be different than about:blank to emit load event.
 		CKEDITOR.env.gecko ? 'javascript:true' : // jshint ignore:line
@@ -193,85 +140,56 @@
 	CKEDITOR.plugins.mediaembed = {};
 	CKEDITOR.plugins.mediaembed.loadingIcon = CKEDITOR.plugins.get( 'mediaembed' ).path + 'images/loader.gif';
 	CKEDITOR.plugins.mediaembed.frameWrapper = function( iFrame, editor ) {
-		var media, preview, value, newValue,
-			doc = iFrame.getFrameDocument(),
+		var doc = iFrame.getFrameDocument();
 
-			isInit = false,
-			isRunning = false,
+		var loadedHandler = CKEDITOR.tools.addFunction( function() {
+			editor.fire( 'lockSnapshot' );
 
-			loadedHandler = CKEDITOR.tools.addFunction( function() {
-				media = doc.getById( 'cke-media' );
-				preview = doc.getById( 'cke-preview' );
-				isInit = true;
+			iFrame.setStyles({
+				height: 0,
+				width: 0
+			});
 
-				if ( newValue ) {
-					update();
-				}
-			} ),
+			doc.getById( 'preview' ).remove();
 
-			updateDoneHandler = CKEDITOR.tools.addFunction( function() {
-				preview.hide();
+			editor.fire( 'unlockSnapshot' );
 
-				var scripts = media.getElementsByTag( 'script' ),
-					head = doc.getHead();
-				for ( var i = 0; i < scripts.count(); i++ ) {
-					var source = scripts.getItem( i ),
-						target = doc.createElement( 'script' );
+			// ping for content height changing and update iframe height correspondingly
+			var prevHeight, interval, timeout;
 
-					source.copyAttributes( target );
-					target.setHtml( source.getHtml() );
-					head.append( target );
+			var stop = function() {
+				window.clearInterval( interval );
+			};
+
+			interval = window.setInterval( function() {
+				var height = Math.max( doc.$.body.offsetHeight, doc.$.documentElement.offsetHeight );
+
+				if ( height === prevHeight ) {
+					timeout = window.setTimeout( stop, 2000 );
+					return;
 				}
 
 				editor.fire( 'lockSnapshot' );
 
-				iFrame.setStyles( {
-					height: 0,
-					width: 0
-				} );
+				window.clearTimeout( timeout );
 
-				var height = Math.max( doc.$.body.offsetHeight, doc.$.documentElement.offsetHeight );
-
-				iFrame.setStyles( {
+				iFrame.setStyles({
 					height: height + 'px',
 					width: '100%'
-				} );
+				});
+
+				prevHeight = height;
 
 				editor.fire( 'unlockSnapshot' );
+			}, 500 );
 
-				// If value changed in the meantime update it again.
-				if ( value != newValue ) {
-					update();
-				} else {
-					isRunning = false;
+			editor.on( 'contentDomUnload', stop );
+		} );
 
-					var interval = window.setInterval(function() {
-						iFrame.setStyles({
-							'width': doc.$.body.scrollWidth + 'px',
-							'height': doc.$.body.scrollHeight + 'px'
-						});
-						doc.getBody().setStyle( 'overflow-y', 'hidden' );
-					}, 5000 );
+		function setValue( value ) {
+			editor.fire( 'lockSnapshot' );
 
-					var stopResizing = function() {
-						window.clearInterval( interval );
-					};
-
-					window.setTimeout( stopResizing, 15000 );
-					editor.on( 'contentDomUnload', stopResizing );
-				}
-			} );
-
-		iFrame.on( 'load', load );
-
-		load();
-
-		function load() {
 			doc = iFrame.getFrameDocument();
-
-			if ( doc.getById( 'cke-media' ) ) {
-				return;
-			}
 
 			// Because of IE9 bug in a src attribute can not be javascript
 			// when you undo (#10930). If you have iFrame with javascript in src
@@ -279,6 +197,11 @@
 			if ( CKEDITOR.env.ie ) {
 				iFrame.removeAttribute( 'src' );
 			}
+
+			iFrame.setStyles({
+				height: '16px',
+				width: '100%'
+			});
 
 			doc.write( '<!DOCTYPE html>' +
 						'<html>' +
@@ -294,10 +217,6 @@
 									'}' +
 								'}' +
 
-								'function update() {' +
-									'getCKE().tools.callFunction( ' + updateDoneHandler + ' );' +
-								'}' +
-
 								'function load() {' +
 									'getCKE().tools.callFunction(' + loadedHandler + ');' +
 								'};' +
@@ -305,45 +224,17 @@
 
 						'</head>' +
 						'<body style="padding:0;margin:0;background:transparent;overflow:hidden" onload="load();">' +
-							'<span id="cke-preview"></span>' +
-							'<span id="cke-media"></span>' +
+							'<span id="preview"><img src=' + CKEDITOR.plugins.mediaembed.loadingIcon + ' alt=' + editor.lang.mediaembed.loading + '></span>' +
+							value +
 						'</body>' +
 						'</html>' );
-		}
-
-		// Run MathJax parsing Tex.
-		function update() {
-			isRunning = true;
-
-			value = newValue;
-
-			editor.fire( 'lockSnapshot' );
-
-			media.setHtml( value );
-
-			// Set loading indicator.
-			preview.setHtml( '<img src=' + CKEDITOR.plugins.mediaembed.loadingIcon + ' alt=' + editor.lang.mediaembed.loading + '>' );
-			preview.show();
-
-			iFrame.setStyles( {
-				height: '16px',
-				width: '16px',
-				// display: 'inline',
-				'vertical-align': 'middle'
-			} );
 
 			editor.fire( 'unlockSnapshot' );
-
-			doc.getWindow().$.update();
 		}
 
 		return {
 			setValue: function( value ) {
-				newValue = value;
-
-				if ( isInit && !isRunning ) {
-					update();
-				}
+				setValue( value );
 			}
 		};
 	};
