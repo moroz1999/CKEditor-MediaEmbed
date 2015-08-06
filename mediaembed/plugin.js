@@ -65,6 +65,7 @@
 							allowTransparency: true,
 							src: fixSrc
 						} );
+						this.parts.embed.setHtml( '' );
 						this.parts.embed.append( iframe );
 					}
 
