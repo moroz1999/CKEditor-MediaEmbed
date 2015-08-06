@@ -89,7 +89,6 @@
 				lang = editor.lang.mediaembed;
 
 			editor.widgets.add( 'mediaembed', {
-				// inline: true,
 				dialog: 'mediaembed',
 				button: lang.button,
 				mask: true,
@@ -245,6 +244,21 @@
 					update();
 				} else {
 					isRunning = false;
+
+					var interval = window.setInterval(function() {
+						iFrame.setStyles({
+							'width': doc.$.body.scrollWidth + 'px',
+							'height': doc.$.body.scrollHeight + 'px'
+						});
+						doc.getBody().setStyle( 'overflow-y', 'hidden' );
+					}, 5000 );
+
+					var stopResizing = function() {
+						window.clearInterval( interval );
+					};
+
+					window.setTimeout( stopResizing, 15000 );
+					editor.on( 'contentDomUnload', stopResizing );
 				}
 			} );
 
@@ -293,7 +307,6 @@
 						'<body style="padding:0;margin:0;background:transparent;overflow:hidden" onload="load();">' +
 							'<span id="cke-preview"></span>' +
 							'<span id="cke-media"></span>' +
-							// '<span id="buffer" style="display:none"></span>' +
 						'</body>' +
 						'</html>' );
 		}
