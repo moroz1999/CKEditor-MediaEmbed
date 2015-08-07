@@ -99,7 +99,7 @@
 						return;
 					}
 
-					data.html = CKEDITOR.tools.htmlDecode( el.getHtml() );
+					data.html = el.getHtml();
 					data.html = editor.dataProcessor.toDataFormat( data.html );
 
 					el.setHtml( '' );
@@ -129,7 +129,11 @@
 								this.setValue( widget.data.html );
 							},
 							commit: function( widget ){
-								widget.setData( 'html', this.getValue() );
+								var html = this.getValue();
+								// filter html
+								html = editor.dataProcessor.toHtml( html );
+								html = editor.dataProcessor.toDataFormat( html );
+								widget.setData( 'html', html );
 							}
 						}]
 					}]
