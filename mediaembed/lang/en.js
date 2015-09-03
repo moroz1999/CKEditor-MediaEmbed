@@ -9,6 +9,5 @@ CKEDITOR.plugins.setLang( 'mediaembed', 'en', {
     button: 'Embed Media',
     dialogTitle: 'Embed Media',
     dialogLabel: 'Paste Embed Code Here',
-    loading: 'loading...',
     pathName: 'Embed Media'
 } );

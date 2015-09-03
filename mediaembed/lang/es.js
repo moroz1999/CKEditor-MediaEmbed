@@ -9,6 +9,5 @@ CKEDITOR.plugins.setLang( 'mediaembed', 'es', {
     button: 'Incrustar Medios',
     dialogTitle: 'Incrustar Medios',
     dialogLabel: 'Pegue el c&oacute;digo de incrustaci&oacute;n aqu&iacute;',
-    loading: 'cargando...',
     pathName: 'Incrustar Medios'
 } );
