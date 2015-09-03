@@ -9,6 +9,5 @@ the specific use of embedding YouTube videos in a responsive way.
     config.extraPlugins = 'mediaembed';
     ```
 3. Add the button to your toolbar by adding the `Mediaembed` item to the toolbar list.
-(See http://docs.cksource.com/CKEditor_3.x/Developers_Guide/Toolbar)
 4. Include the styles/mediaembed.css file in the head of the page that the edited content will appear on.
 
