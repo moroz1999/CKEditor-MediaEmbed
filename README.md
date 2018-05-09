@@ -1,3 +1,5 @@
+Composer-ready fork
+
 This is a rework of the plugin designed by frozeman and meedan adjusted for
 the specific use of embedding YouTube videos in a responsive way.
 
